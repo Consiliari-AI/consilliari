@@ -8,6 +8,7 @@ import {
   refreshToken,
   getGoogleAuthUrl,
   handleGoogleCallback,
+  confirmPasswordReset,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validator.js";
 import { signupSchema, loginSchema, resetPasswordSchema, updatePasswordSchema } from "../validators/auth.validators.js";
@@ -23,5 +24,7 @@ router.post("/refresh-token", refreshToken);
 
 router.get("/google", getGoogleAuthUrl);
 router.post("/google/callback", handleGoogleCallback);
+
+router.post("/reset-password-confirm", confirmPasswordReset);
 
 export default router;

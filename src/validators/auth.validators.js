@@ -21,58 +21,25 @@ const nameSchema = z
   .max(50, "Name must not exceed 50 characters")
   .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes");
 
-export const signupSchema = z.object({
-  email: z
-    .string({
-      required_error: "Email is required",
-      invalid_type_error: "Email must be a string",
-    })
-    .email("Please enter a valid email address")
-    .transform((email) => email.toLowerCase().trim()),
+const emailSchema = z
+  .string({
+    required_error: "Email is required",
+    invalid_type_error: "Email must be a string",
+  })
+  .email("Please enter a valid email address")
+  .transform((email) => email.toLowerCase().trim());
 
+export const signupSchema = z.object({
+  email: emailSchema,
   password: passwordSchema,
-  full_name: nameSchema.min(2, "Full name must be at least 2 characters long").max(100, "Full name must not exceed 100 characters"),
+  full_name: nameSchema,
 });
 
 export const loginSchema = z.object({
-  email: z
-    .string({
-      required_error: "Email is required",
-      invalid_type_error: "Email must be a string",
-    })
-    .email("Please enter a valid email address")
-    .transform((email) => email.toLowerCase().trim()),
-
-  password: z
-    .string({
-      required_error: "Password is required",
-      invalid_type_error: "Password must be a string",
-    })
-    .min(1, "Password is required"),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export const resetPasswordSchema = z.object({
-  email: z
-    .string({
-      required_error: "Email is required",
-      invalid_type_error: "Email must be a string",
-    })
-    .email("Please enter a valid email address")
-    .transform((email) => email.toLowerCase().trim()),
+  email: emailSchema,
 });
-
-export const updatePasswordSchema = z
-  .object({
-    currentPassword: z
-      .string({
-        required_error: "Current password is required",
-        invalid_type_error: "Current password must be a string",
-      })
-      .min(1, "Current password is required"),
-
-    newPassword: passwordSchema,
-  })
-  .refine((data) => data.currentPassword !== data.newPassword, {
-    message: "New password must be different from current password",
-    path: ["newPassword"],
-  });

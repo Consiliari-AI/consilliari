@@ -136,67 +136,6 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-export const updatePassword = catchAsync(async (req, res, next) => {
-  const { password } = req.body;
-
-  const { error } = await req.supabase.auth.updateUser({
-    password,
-  });
-
-  if (error) return next(createError(error.status || 400, error.message));
-
-  res.status(200).json({
-    success: true,
-    message: "Password updated successfully",
-  });
-});
-
-// Add a refresh token endpoint
-export const refreshToken = catchAsync(async (req, res, next) => {
-  const refreshToken = req.cookies.refresh_token;
-
-  if (!refreshToken) {
-    return next(createError(401, "No refresh token provided"));
-  }
-
-  const { data, error } = await req.supabase.auth.refreshSession({
-    refresh_token: refreshToken,
-  });
-
-  if (error) {
-    // Clear cookies if refresh fails
-    res.clearCookie("access_token");
-    res.clearCookie("refresh_token");
-    return next(createError(401, "Invalid refresh token"));
-  }
-
-  // Set new access token cookie
-  res.cookie("access_token", data.session.access_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 1000, // 1 hour
-    path: "/",
-  });
-
-  // Set new refresh token cookie
-  res.cookie("refresh_token", data.session.refresh_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/",
-  });
-
-  res.status(200).json({
-    success: true,
-    message: "Token refreshed successfully",
-    data: {
-      user: userDto(data.user),
-    },
-  });
-});
-
 export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
   const { data, error } = await req.supabase.auth.signInWithOAuth({
     provider: "google",
@@ -230,24 +169,21 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
   const urlObj = new URL(url);
   const hash = urlObj.hash.substring(1);
   const params = new URLSearchParams(hash);
-
   const accessToken = params.get("access_token");
   const refreshToken = params.get("refresh_token");
 
   if (!accessToken || !refreshToken) {
-    return next(createError(400, "No tokens provided in callback"));
+    return next(createError(400, "No tokens provided"));
   }
   const { data, error } = await req.supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
-
   if (error) {
     return next(createError(error.status || 400, error.message));
   }
 
   const { data: profile, error: profileError } = await req.supabase.from("Users").select("*").eq("id", data.user.id).maybeSingle();
-
   if (!profile && !profileError) {
     const { error: insertError } = await req.supabase.from("Users").insert([
       {
@@ -256,13 +192,11 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
         email: data.user.email,
       },
     ]);
-
     if (insertError) {
       console.error("Profile creation error:", insertError);
       return next(createError(500, "Error creating user profile"));
     }
   }
-
   res.cookie("access_token", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -270,7 +204,6 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
     maxAge: 60 * 60 * 1000, // 1 hour
     path: "/",
   });
-
   res.cookie("refresh_token", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -285,5 +218,67 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
     data: {
       user: userDto(data.user),
     },
+  });
+});
+
+export const confirmPasswordReset = catchAsync(async (req, res, next) => {
+  const { url, newPassword } = req.body;
+  if (!url || !newPassword) {
+    return next(createError(400, "url and new password are required"));
+  }
+
+  const urlObj = new URL(url);
+  const hash = urlObj.hash.substring(1);
+  const params = new URLSearchParams(hash);
+
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) {
+    return next(createError(400, "Tokens not found in url"));
+  }
+
+  const { data: sessionData, error: sessionError } = await req.supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (sessionError) {
+    return next(createError(sessionError.status || 401, sessionError.message));
+  }
+  n;
+  const { data: updateData, error: updateError } = await req.supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (updateError) {
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    return next(createError(updateError.status || 400, updateError.message));
+  }
+
+  if (!sessionData || !sessionData.session) {
+    return next(createError(200, "Password updated successfully"));
+  }
+
+  res.cookie("access_token", sessionData.session.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
+  res.cookie("refresh_token", sessionData.session.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Password updated successfully",
   });
 });
