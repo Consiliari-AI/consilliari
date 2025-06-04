@@ -1,74 +1,75 @@
 import { catchAsync } from "../utils/error.js";
 import { createError } from "../utils/createError.js";
-import { success } from "zod/v4";
+import { userDto } from "../dtos/auth.dto.js";
 
 export const signup = catchAsync(async (req, res, next) => {
-  const { email, password, firstName, lastName } = req.body;
+  const { email, password, full_name } = req.body;
 
-  const { data, error } = await req.supabase.auth.signUp({
+  const { data: authData, error: authError } = await req.supabase.auth.signUp({
     email: email.toLowerCase(),
     password,
     options: {
       data: {
-        first_name: firstName,
-        last_name: lastName,
+        full_name: full_name,
       },
     },
   });
-  console.log("auth error", error);
-  if (error) {
-    return next(createError(error.status || 400, error.message));
+  if (authError) {
+    return next(createError(authError.status || 400, authError.message));
+  }
+
+  const { data: profile, error: profileCheckError } = await req.supabase.from("Users").select("*").eq("id", authData.user.id).maybeSingle();
+  if (profileCheckError) {
+    return next(createError(profileCheckError.status, profileCheckError.message));
+  }
+  if (profile) {
+    res.status(201).json({
+      success: true,
+      message: "Registration successful. Please check your email for verification.",
+      data: {
+        user: userDto(profile.user),
+      },
+    });
   }
 
   const { error: profileError } = await req.supabase.from("Users").insert([
     {
-      id: data.user.id,
-      first_name: firstName,
-      last_name: lastName,
+      id: authData.user.id,
+      full_name: full_name,
       email: email.toLowerCase(),
-      role: "user", // default role
     },
   ]);
 
   if (profileError) {
-    console.error("Profile creation error:", profileError);
-    return next(createError(500, "Error creating user profile"));
+    return next(createError(profileError.status, profileError.message));
   }
 
   res.status(201).json({
     success: true,
     message: "Registration successful. Please check your email for verification.",
     data: {
-      user: data.user,
+      user: userDto(authData.user),
     },
   });
 });
 
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
-  const { data, error } = await req.supabase.auth.signInWithPassword({
+  const { data, authError } = await req.supabase.auth.signInWithPassword({
     email: email.toLowerCase(),
     password,
   });
-
-  if (error) {
+  if (authError) {
     return next(createError(error.status || 400, error.message));
   }
-
   const { data: profile, error: profileError } = await req.supabase.from("Users").select("*").eq("id", data.user.id).maybeSingle();
-
   if (profileError) {
-    console.error("Profile fetch error:", profileError);
-    return next(createError(500, "Error fetching user profile"));
+    return next(createError(profileError.status, profileError.message));
   }
-
   if (!profile) {
-    console.log("No profile found for user:", data.user.id);
     return next(createError(404, "User profile not found"));
   }
 
-  // Set access token cookie
   res.cookie("access_token", data.session.access_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // Use secure cookies in production
@@ -89,13 +90,7 @@ export const login = catchAsync(async (req, res, next) => {
     success: true,
     message: "Login successful",
     data: {
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        firstName: profile?.first_name,
-        lastName: profile?.last_name,
-        role: profile?.role,
-      },
+      user: userDto(data.user),
     },
   });
 });
@@ -117,7 +112,6 @@ export const logout = catchAsync(async (req, res, next) => {
 
   const { error } = await req.supabase.auth.signOut();
   if (error) {
-    console.error("Logout error:", error);
     return next(createError(error.status || 400, error.message));
   }
 
@@ -197,10 +191,12 @@ export const refreshToken = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Token refreshed successfully",
+    data: {
+      user: userDto(data.user),
+    },
   });
 });
 
-// Get Google OAuth URL
 export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
   const { data, error } = await req.supabase.auth.signInWithOAuth({
     provider: "google",
@@ -216,7 +212,6 @@ export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
   if (error) {
     return next(createError(error.status || 400, error.message));
   }
-
   res.status(200).json({
     success: true,
     data: {
@@ -225,17 +220,15 @@ export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
   });
 });
 
-// Handle Google OAuth callback
 export const handleGoogleCallback = catchAsync(async (req, res, next) => {
   const { url } = req.body;
-
   if (!url) {
     return next(createError(400, "No callback URL provided"));
   }
 
   // Extract the access token and refresh token from the URL
   const urlObj = new URL(url);
-  const hash = urlObj.hash.substring(1); // Remove the # character
+  const hash = urlObj.hash.substring(1);
   const params = new URLSearchParams(hash);
 
   const accessToken = params.get("access_token");
@@ -244,8 +237,6 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
   if (!accessToken || !refreshToken) {
     return next(createError(400, "No tokens provided in callback"));
   }
-
-  // Set up the session with Supabase
   const { data, error } = await req.supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
@@ -255,16 +246,13 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
     return next(createError(error.status || 400, error.message));
   }
 
-  // Check if user profile exists
   const { data: profile, error: profileError } = await req.supabase.from("Users").select("*").eq("id", data.user.id).maybeSingle();
 
-  // If profile doesn't exist, create one
   if (!profile && !profileError) {
     const { error: insertError } = await req.supabase.from("Users").insert([
       {
         id: data.user.id,
-        first_name: data.user.user_metadata?.full_name?.split(" ")[0] || "",
-        last_name: data.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+        full_name: data.user.user_metadata?.full_name || "",
         email: data.user.email,
       },
     ]);
@@ -275,7 +263,6 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
     }
   }
 
-  // Set access token cookie
   res.cookie("access_token", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -295,14 +282,8 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Google authentication successful",
-    success: true,
     data: {
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        firstName: data.user.user_metadata?.full_name?.split(" ")[0] || "",
-        lastName: data.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
-      },
+      user: userDto(data.user),
     },
   });
 });
