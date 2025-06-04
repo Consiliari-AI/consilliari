@@ -46,7 +46,7 @@ export const signup = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    message: "Registration successful. Please check your email for verification.",
+    message: "Registration successful.",
     data: {
       user: userDto(authData.user),
     },
@@ -55,12 +55,12 @@ export const signup = catchAsync(async (req, res, next) => {
 
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  const { data, authError } = await req.supabase.auth.signInWithPassword({
+  const { data, error: authError } = await req.supabase.auth.signInWithPassword({
     email: email.toLowerCase(),
     password,
   });
   if (authError) {
-    return next(createError(error.status || 400, error.message));
+    return next(createError(authError.status || 400, authError.message));
   }
   const { data: profile, error: profileError } = await req.supabase.from("Users").select("*").eq("id", data.user.id).maybeSingle();
   if (profileError) {
