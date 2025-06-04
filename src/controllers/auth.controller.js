@@ -161,7 +161,6 @@ export const confirmPasswordReset = catchAsync(async (req, res, next) => {
   if (sessionError) {
     return next(createError(sessionError.status || 401, sessionError.message));
   }
-  n;
   const { data: updateData, error: updateError } = await req.supabase.auth.updateUser({
     password: newPassword,
   });
