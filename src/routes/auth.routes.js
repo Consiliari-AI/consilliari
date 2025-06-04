@@ -7,6 +7,7 @@ import {
   confirmPasswordReset,
   getGoogleAuthUrl,
   handleGoogleCallback,
+  confirmEmail,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validator.js";
 import { signupSchema, loginSchema, resetPasswordSchema } from "../validators/auth.validators.js";
@@ -18,6 +19,7 @@ router.post("/login", validate(loginSchema), login);
 router.post("/logout", logout);
 router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
 router.post("/reset-password-confirm", confirmPasswordReset);
+router.post("/confirm-email", confirmEmail);
 
 router.get("/google", getGoogleAuthUrl);
 router.post("/google/callback", handleGoogleCallback);

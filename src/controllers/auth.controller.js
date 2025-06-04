@@ -12,6 +12,7 @@ export const signup = catchAsync(async (req, res, next) => {
       data: {
         full_name: full_name,
       },
+      emailRedirectTo: `${process.env.CLIENT_URL}/auth/confirm-email`,
     },
   });
   if (authError) {
@@ -278,6 +279,67 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
     message: "Google authentication successful",
     data: {
       user: userDto(data.user),
+    },
+  });
+});
+
+export const confirmEmail = catchAsync(async (req, res, next) => {
+  const { url } = req.body;
+
+  if (!url) {
+    return next(createError(400, "Confirmation URL is required"));
+  }
+
+  const urlObj = new URL(url);
+  const hash = urlObj.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) {
+    return next(createError(400, "Invalid or expired confirmation link"));
+  }
+
+  const { data: sessionData, error: sessionError } = await req.supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (sessionError) {
+    return next(createError(sessionError.status || 401, sessionError.message));
+  }
+
+  const { data: userData, error: userError } = await req.supabase.auth.getUser(accessToken);
+
+  if (userError) {
+    return next(createError(userError.status || 400, userError.message));
+  }
+
+  if (!userData.user.email_confirmed_at) {
+    return next(createError(400, "Email confirmation failed"));
+  }
+
+  res.cookie("access_token", sessionData.session.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
+  res.cookie("refresh_token", sessionData.session.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Email confirmed successfully",
+    data: {
+      user: userDto(userData.user),
     },
   });
 });
