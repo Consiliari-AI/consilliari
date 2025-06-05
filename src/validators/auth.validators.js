@@ -43,3 +43,11 @@ export const loginSchema = z.object({
 export const resetPasswordSchema = z.object({
   email: emailSchema,
 });
+
+export const confirmResetPasswordSchema = z.object({
+  newPassword: passwordSchema,
+  url: z.string({
+    required_error: "url is required",
+    invalid_type_error: "url must be a string",
+  }),
+});

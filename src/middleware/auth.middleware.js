@@ -1,4 +1,5 @@
 import { createError } from "../utils/createError.js";
+import supabaseAdmin from "../lib/supabaseConfig.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -11,13 +12,13 @@ export const protect = async (req, res, next) => {
     const {
       data: { user },
       error,
-    } = await req.supabase.auth.getUser(accessToken);
+    } = await supabaseAdmin.auth.getUser(accessToken);
 
     if (error || !user) {
       return next(createError(401, "Not authenticated - invalid token"));
     }
 
-    const { data: profile, error: profileError } = await req.supabase.from("Users").select("*").eq("id", user.id).single();
+    const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", user.id).single();
 
     if (profileError || !profile) {
       return next(createError(401, "User profile not found"));
