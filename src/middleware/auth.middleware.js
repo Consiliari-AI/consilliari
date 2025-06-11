@@ -6,7 +6,7 @@ export const protect = async (req, res, next) => {
     const accessToken = req.cookies.access_token;
 
     if (!accessToken) {
-      return next(createError(401, "Not authenticated - no token provided"));
+      return next(createError(401, "Not authenticated"));
     }
 
     const {
@@ -15,7 +15,7 @@ export const protect = async (req, res, next) => {
     } = await supabaseAdmin.auth.getUser(accessToken);
 
     if (error || !user) {
-      return next(createError(401, "Not authenticated - invalid token"));
+      return next(createError(401, "Not authenticated"));
     }
 
     const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", user.id).single();

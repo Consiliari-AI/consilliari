@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import onboardingRoutes from "./routes/onboarding.routes.js";
 import { errorHandler } from "./utils/error.js";
 import cookieParser from "cookie-parser";
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/onboarding", onboardingRoutes);
 
 app.use(errorHandler);
 

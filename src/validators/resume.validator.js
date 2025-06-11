@@ -7,6 +7,7 @@ import {
   promotionBeforeThatOptions,
   relevanceOfEducationOptions,
   time_in_years,
+  proficiencyLevelOptions,
 } from "../constants/onboardingData";
 
 const jobInformationSchema = z.object({
