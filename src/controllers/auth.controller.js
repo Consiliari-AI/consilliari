@@ -3,7 +3,8 @@ import { createError } from "../utils/createError.js";
 import { userDto } from "../dtos/auth.dto.js";
 import { findUserById, createUser, updateUserEmailVerification, findUserByEmail } from "../services/auth.service.js";
 import supabaseAdmin from "../lib/supabaseConfig.js";
-
+import { createUserSettings } from "../services/user.settings.service.js";
+import { emptyResumeState, emptyCareerBluePrintState } from "../constants/emptyOnboardingState.js";
 export const signup = catchAsync(async (req, res, next) => {
   const { email, password, full_name } = req.body;
 
@@ -31,7 +32,13 @@ export const signup = catchAsync(async (req, res, next) => {
     email: email.toLowerCase(),
     full_name: full_name,
   });
-
+  console.log("user profile", userProfile);
+  await createUserSettings(
+    userProfile?.id,
+    "this is my resume",
+    JSON.stringify(emptyResumeState),
+    JSON.stringify(emptyCareerBluePrintState)
+  );
   res.status(201).json({
     success: true,
     message: "Registration successful. Please check your email for verification.",

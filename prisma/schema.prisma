@@ -4,18 +4,32 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  full_name       String
-  email_verified  Boolean   @default(false)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id             String        @id @default(uuid())
+  email          String        @unique
+  full_name      String
+  email_verified Boolean       @default(false)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  UserSettings   UserSettings?
 
   @@map("Users")
+}
+
+model UserSettings {
+  id             String   @id @default(uuid())
+  user_id        String   @unique
+  resume_content String   @db.Text
+  resume         Json     @db.JsonB
+  career_blueprint Json   @db.JsonB
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("UserSettings")
 }
