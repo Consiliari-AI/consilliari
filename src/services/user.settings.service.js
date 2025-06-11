@@ -19,3 +19,12 @@ export const createUserSettings = async (user_id, resume_content, resume, career
 
   return newSettings;
 };
+
+export const updateUserSettings = async (userId, updateData) => {
+  const updatedSettings = await prisma.userSettings.update({
+    where: { user_id: userId },
+    data: updateData,
+  });
+
+  return updatedSettings;
+};

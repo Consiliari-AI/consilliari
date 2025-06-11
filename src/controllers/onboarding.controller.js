@@ -3,6 +3,8 @@ import { createError } from "../utils/createError.js";
 import pdfParse from "pdf-parse";
 import { getLLMResponse } from "../lib/llmConfig.js";
 import { cvParsingLLMPrompt } from "../lib/cvParsingLLMPrompt.js";
+import { updateUserSettings } from "../services/user.settings.service.js";
+import { cvparseDto } from "../dtos/cvparse.dto.js";
 export const parseCV = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(createError(400, "No file uploaded"));
@@ -17,10 +19,10 @@ export const parseCV = catchAsync(async (req, res, next) => {
     messages: [],
   });
   console.log("cv text is", llmResponse);
-
+  const userSettings = await updateUserSettings(req.user.id, { resume_content: cvText, resume: llmResponse });
   res.status(200).json({
     success: true,
     message: "CV parsed successfully",
-    data: JSON.parse(llmResponse),
+    data: cvparseDto(userSettings),
   });
 });
