@@ -34,3 +34,48 @@ export const currentRoleExperienceOptions = [
   "Exhausted and overwhelmed",
   "Stressed and unsatisfied",
 ];
+export const readinessForNextRoleOptions = ["Not Ready", "Partially Ready", "Mostly Ready", "Fully Ready"];
+export const industryGrowthTrajectoryPerceptionOptions = ["Declining", "Stable", "Moderate Growth", "High Growth"];
+export const preferredCoachingStyleOptions = [
+  " Direct & Action-Oriented",
+  " Supportive & Encouraging",
+  " Supportive & Encouraging",
+  " Direct & Action-Oriented",
+];
+
+export const accountabilityOptions = [
+  "Regular check-ins and reminders",
+  "Seeing clear progress and milestones",
+  "Celebrating small wins along the way",
+  "Breaking down large goals into small, manageable tasks",
+  "Having a structured plan to follow",
+];
+export const reactionToSetbackOptions = [
+  "I analyze what went wrong and try to learn from it",
+  "I seek advice or support from others",
+  "I tend to get discouraged for a bit before trying again",
+  " I look for an alternative approach or solution quickly",
+];
+export const teamPerformanceOptions = [
+  "Consistently high-performing",
+  "Struggling with moderate to significant issues",
+  "Generally effective with occasional issues",
+  "Severely underperforming",
+  "Newly formed, still developing",
+];
+export const perceiveAsALeaderOptions = [
+  "Exceptional and highly effective",
+  "Promising and emerging",
+  "Capable, with clear potential",
+  "Situationally effective",
+  "Not currently recognized as a leader",
+  "Other",
+];
+
+export const relationWithManagerOptions = [
+  "They serve as an excellent role model",
+  "They significantly contribute to my success",
+  "Our working relationship is positive and effective",
+  "Expectations are unclear",
+  "Our working relationship is strained or ineffective",
+];
