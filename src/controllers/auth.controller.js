@@ -413,3 +413,18 @@ export const handleLinkedInCallback = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+export const getMe = catchAsync(async (req, res, next) => {
+  const profile = await findUserById(req.user.id);
+
+  if (!profile) {
+    return next(createError(404, "User profile not found"));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: userDto(profile),
+    },
+  });
+});

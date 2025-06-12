@@ -10,9 +10,11 @@ import {
   confirmEmail,
   getLinkedInAuthUrl,
   handleLinkedInCallback,
+  getMe,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validator.js";
 import { signupSchema, loginSchema, resetPasswordSchema, confirmResetPasswordSchema } from "../validators/auth.validators.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -28,5 +30,7 @@ router.post("/google/callback", handleGoogleCallback);
 
 router.get("/linkedin", getLinkedInAuthUrl);
 router.post("/linkedin/callback", handleLinkedInCallback);
+
+router.get("/me", protect, getMe);
 
 export default router;
