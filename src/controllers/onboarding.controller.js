@@ -36,7 +36,7 @@ export const completeOnboarding = catchAsync(async (req, res) => {
   });
 
   await updateUserProfile(req.user.id, {
-    isOnboardingCompleted: true,
+    is_onboarding_completed: true,
   });
 
   res.status(200).json({

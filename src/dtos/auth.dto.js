@@ -4,5 +4,6 @@ export const userDto = (user) => {
     email: user?.email,
     full_name: user?.full_name || "",
     email_verified: user?.email_verified || false,
+    is_onboarding_completed: user?.is_onboarding_completed || false,
   };
 };

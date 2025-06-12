@@ -14,7 +14,7 @@ model User {
   email                 String        @unique
   full_name             String
   email_verified        Boolean       @default(false)
-  isOnboardingCompleted Boolean       @default(false) 
+  is_onboarding_completed Boolean       @default(false) 
   created_at            DateTime      @default(now())
   updated_at            DateTime      @updatedAt
   UserSettings          UserSettings?

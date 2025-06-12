@@ -5,52 +5,27 @@ export const protect = async (req, res, next) => {
   try {
     const accessToken = req.cookies.access_token;
     const refreshToken = req.cookies.refresh_token;
-    if (!accessToken || !refreshToken) {
+
+    if (!refreshToken) {
       return next(createError(401, "Not authenticated"));
     }
+    if (!accessToken) {
+      return await refreshAndContinue(req, res, next, refreshToken);
+    }
+
     const {
       data: { user },
       error,
     } = await supabaseAdmin.auth.getUser(accessToken);
+
+    //if access token is invalid
     if (error || !user) {
-      const { data: refreshData, error: refreshError } = await supabaseAdmin.auth.refreshSession({
-        refresh_token: refreshToken,
-      });
-
-      if (refreshError || !refreshData?.session) {
-        res.clearCookie("access_token");
-        res.clearCookie("refresh_token");
-        return next(createError(401, "Session expired. Please login again."));
-      }
-      res.cookie("access_token", refreshData.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 1000, // 1 hour
-        path: "/",
-      });
-
-      res.cookie("refresh_token", refreshData.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: "/",
-      });
-
-      const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", refreshData.user.id).single();
-
-      if (profileError || !profile) {
-        return next(createError(401, "User profile not found"));
-      }
-
-      req.user = refreshData.user;
-      req.profile = profile;
-      return next();
+      return await refreshAndContinue(req, res, next, refreshToken);
     }
 
-    // If access token is already valid
+    // If access token is valid
     const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", user.id).single();
+
     if (profileError || !profile) {
       return next(createError(401, "User profile not found"));
     }
@@ -61,9 +36,54 @@ export const protect = async (req, res, next) => {
   } catch (error) {
     res.clearCookie("access_token");
     res.clearCookie("refresh_token");
-    next(createError(401, "Authentication failed"));
+    next(createError(401, "Not Authenticated"));
   }
 };
+
+async function refreshAndContinue(req, res, next, refreshToken) {
+  try {
+    const { data: refreshData, error: refreshError } = await supabaseAdmin.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (refreshError || !refreshData?.session) {
+      res.clearCookie("access_token");
+      res.clearCookie("refresh_token");
+      return next(createError(401, "Session expired. Please login again."));
+    }
+
+    // Set new tokens in cookies
+    res.cookie("access_token", refreshData.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000, // 1 hour
+      path: "/",
+    });
+
+    res.cookie("refresh_token", refreshData.session.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/",
+    });
+
+    const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", refreshData.user.id).single();
+
+    if (profileError || !profile) {
+      return next(createError(401, "User profile not found"));
+    }
+
+    req.user = refreshData.user;
+    req.profile = profile;
+    return next();
+  } catch (error) {
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    return next(createError(401, "Not Authenticated"));
+  }
+}
 
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
