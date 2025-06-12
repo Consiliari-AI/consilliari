@@ -8,7 +8,7 @@ import {
   relevanceOfEducationOptions,
   time_in_years,
   proficiencyLevelOptions,
-} from "../constants/onboardingData";
+} from "../constants/onboardingData.js";
 
 const jobInformationSchema = z.object({
   current_job_title: z

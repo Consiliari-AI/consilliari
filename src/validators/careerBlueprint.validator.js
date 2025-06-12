@@ -8,7 +8,7 @@ import {
   readinessForNextRoleOptions,
   relationWithManagerOptions,
   teamPerformanceOptions,
-} from "../constants/onboardingData";
+} from "../constants/onboardingData.js";
 
 const goalsSchema = z
   .object({

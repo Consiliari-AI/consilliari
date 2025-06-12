@@ -4,7 +4,9 @@ import pdfParse from "pdf-parse";
 import { getLLMResponse } from "../lib/llmConfig.js";
 import { cvParsingLLMPrompt } from "../lib/cvParsingLLMPrompt.js";
 import { updateUserSettings } from "../services/user.settings.service.js";
+import { updateUserProfile } from "../services/auth.service.js";
 import { cvparseDto } from "../dtos/cvparse.dto.js";
+
 export const parseCV = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(createError(400, "No file uploaded"));
@@ -23,5 +25,22 @@ export const parseCV = catchAsync(async (req, res, next) => {
     success: true,
     message: "CV parsed successfully",
     data: cvparseDto(userSettings),
+  });
+});
+
+export const completeOnboarding = catchAsync(async (req, res) => {
+  const { resume, career_blueprint } = req.body;
+  await updateUserSettings(req.user.id, {
+    resume: JSON.stringify(resume),
+    career_blueprint: JSON.stringify(career_blueprint),
+  });
+
+  await updateUserProfile(req.user.id, {
+    isOnboardingCompleted: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Onboarding completed successfully",
   });
 });
