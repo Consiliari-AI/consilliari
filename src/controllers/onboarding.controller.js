@@ -18,7 +18,6 @@ export const parseCV = catchAsync(async (req, res, next) => {
     systemPrompt,
     messages: [],
   });
-  console.log("cv text is", llmResponse);
   const userSettings = await updateUserSettings(req.user.id, { resume_content: cvText, resume: llmResponse });
   res.status(200).json({
     success: true,

@@ -10,16 +10,18 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(uuid())
-  email          String        @unique
-  full_name      String
-  email_verified Boolean       @default(false)
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  UserSettings   UserSettings?
+  id                    String        @id @default(uuid())
+  email                 String        @unique
+  full_name             String
+  email_verified        Boolean       @default(false)
+  isOnboardingCompleted Boolean       @default(false) 
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
+  UserSettings          UserSettings?
 
   @@map("Users")
 }
+
 
 model UserSettings {
   id             String   @id @default(uuid())

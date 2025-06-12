@@ -5,69 +5,87 @@ import {
   perceiveAsALeaderOptions,
   preferredCoachingStyleOptions,
   reactionToSetbackOptions,
-  readinessForNextRole,
   readinessForNextRoleOptions,
   relationWithManagerOptions,
   teamPerformanceOptions,
 } from "../constants/onboardingData";
 
-const goalsSchema = z.object({
-  short_term_goal: z
-    .string({
-      required_error: "Short term goal is required",
-      invalid_type_error: "Short term goal must be a string",
-    })
-    .min(1, "Short term goal cannot be empty")
-    .max(1000, "Short term goal is too long"),
+const goalsSchema = z
+  .object({
+    short_term_goal: z
+      .string({
+        required_error: "Short term goal is required",
+        invalid_type_error: "Short term goal must be a string",
+      })
+      .max(1000, "Short term goal is too long")
+      .optional(), // Make it optional at first
 
-  long_term_goal: z
-    .string({
-      required_error: "Long term goal is required",
-      invalid_type_error: "Long term goal must be a string",
-    })
-    .min(1, "Long term goal cannot be empty")
-    .max(1000, "Long term goal is too long"),
+    long_term_goal: z
+      .string({
+        required_error: "Long term goal is required",
+        invalid_type_error: "Long term goal must be a string",
+      })
+      .max(1000, "Long term goal is too long")
+      .optional(),
 
-  no_goals: z.boolean({
-    required_error: "No goals selection is required",
-    invalid_type_error: "No goals must be a boolean",
-  }),
+    no_goals: z.boolean({
+      required_error: "No goals selection is required",
+      invalid_type_error: "No goals must be a boolean",
+    }),
 
-  readiness_for_next_goal: z.enum(readinessForNextRoleOptions, {
-    required_error: "Readiness for next goal is required",
-    invalid_type_error: "Invalid readiness level",
-  }),
+    readiness_for_next_goal: z.enum(readinessForNextRoleOptions, {
+      required_error: "Readiness for next goal is required",
+      invalid_type_error: "Invalid readiness level",
+    }),
 
-  development_for_next_role: z
-    .string({
-      required_error: "Development for next role is required",
-      invalid_type_error: "Development for next role must be a string",
-    })
-    .min(1, "Development for next role cannot be empty")
-    .max(1000, "Development for next role is too long"),
+    development_for_next_role: z
+      .string({
+        required_error: "Development for next role is required",
+        invalid_type_error: "Development for next role must be a string",
+      })
+      .min(1, "Development for next role cannot be empty")
+      .max(1000, "Development for next role is too long"),
 
-  challenges_for_goals: z
-    .string({
-      required_error: "Challenges for goals is required",
-      invalid_type_error: "Challenges for goals must be a string",
-    })
-    .min(1, "Challenges for goals cannot be empty")
-    .max(1000, "Challenges for goals is too long"),
+    challenges_for_goals: z
+      .string({
+        required_error: "Challenges for goals is required",
+        invalid_type_error: "Challenges for goals must be a string",
+      })
+      .min(1, "Challenges for goals cannot be empty")
+      .max(1000, "Challenges for goals is too long"),
 
-  clarity_on_overcoming_obstacle: z
-    .number({
-      required_error: "Clarity rating is required",
-      invalid_type_error: "Clarity must be a number between 1 and 5",
-    })
-    .min(1, "Minimum value is 1")
-    .max(5, "Maximum value is 5"),
-});
+    clarity_on_overcoming_obstacle: z
+      .number({
+        required_error: "Clarity rating is required",
+        invalid_type_error: "Clarity must be a number between 1 and 5",
+      })
+      .min(1, "Minimum value is 1")
+      .max(5, "Maximum value is 5"),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.no_goals) {
+      if (!data.short_term_goal || data.short_term_goal.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["short_term_goal"],
+          message: "Short term goal is required",
+        });
+      }
+      if (!data.long_term_goal || data.long_term_goal.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["long_term_goal"],
+          message: "Long term goal is required",
+        });
+      }
+    }
+  });
 
 const personalAlignmentSchema = z.object({
-  rating: z
-    .string({
+  rating: z.coerce
+    .number({
       required_error: "Personal alignment rating is required",
-      invalid_type_error: "Personal alignment rating must be a string",
+      invalid_type_error: "Personal alignment rating must be a number",
     })
     .min(1, "Personal alignment rating cannot be empty")
     .max(5, "Personal alignment Rating must be between 1 and 5"),
@@ -147,14 +165,15 @@ const momentumSchema = z.object({
 });
 
 const marketViewSchema = z.object({
-  annual_salary: z
+  annual_salary: z.coerce
     .number({
       required_error: "Annual salary is required",
       invalid_type_error: "Annual salary must be a number",
     })
+    .min(1, "Annual Salary is required")
     .nonnegative("Annual salary must be a non-negative number"),
 
-  annual_bonus: z
+  annual_bonus: z.coerce
     .number({
       invalid_type_error: "Annual bonus must be a number",
     })
@@ -162,7 +181,7 @@ const marketViewSchema = z.object({
     .optional()
     .default(0),
 
-  equity: z
+  equity: z.coerce
     .number({
       invalid_type_error: "Equity must be a number",
     })
@@ -170,7 +189,7 @@ const marketViewSchema = z.object({
     .optional()
     .default(0),
 
-  other_compensation: z
+  other_compensation: z.coerce
     .number({
       invalid_type_error: "Other compensation must be a number",
     })
@@ -205,26 +224,108 @@ const workStyleSchema = z.object({
 
   excitement_about_consiliari: z
     .string({
-      required_error: "Excitement about Consiliari is required",
       invalid_type_error: "Excitement about Consiliari must be a string",
     })
-    .min(1, "Excitement about Consiliari cannot be empty")
-    .max(500, "Excitement about Consiliari is too long"),
+    .max(500, "Excitement about Consiliari is too long")
+    .optional(),
 });
 
 const selfLeadershipAssessmentSchema = z.object({
-  self_awareness: z.number().min(0).max(100),
-  effective_communication: z.number().min(0).max(100),
-  interpersonal_relations: z.number().min(0).max(100),
-  vision: z.number().min(0).max(100),
-  time_management: z.number().min(0).max(100),
-  decision_making: z.number().min(0).max(100),
-  developing_team_members: z.number().min(0).max(100),
-  team_performance_leadership: z.number().min(0).max(100),
-  conflict_resolution: z.number().min(0).max(100),
-  strategic_thinking: z.number().min(0).max(100),
-  organizational_collaboration: z.number().min(0).max(100),
-  executive_presence: z.number().min(0).max(100),
+  self_awareness: z.coerce
+    .number({
+      required_error: "Self-awareness is required",
+      invalid_type_error: "Self-awareness must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  effective_communication: z.coerce
+    .number({
+      required_error: "Effective communication is required",
+      invalid_type_error: "Effective communication must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  interpersonal_relations: z.coerce
+    .number({
+      required_error: "Interpersonal relations is required",
+      invalid_type_error: "Interpersonal relations must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  vision: z.coerce
+    .number({
+      required_error: "Vision is required",
+      invalid_type_error: "Vision must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  time_management: z.coerce
+    .number({
+      required_error: "Time management is required",
+      invalid_type_error: "Time management must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  decision_making: z.coerce
+    .number({
+      required_error: "Decision making is required",
+      invalid_type_error: "Decision making must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  developing_team_members: z.coerce
+    .number({
+      required_error: "Developing team members is required",
+      invalid_type_error: "Developing team members must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  team_performance_leadership: z.coerce
+    .number({
+      required_error: "Team performance leadership is required",
+      invalid_type_error: "Team performance leadership must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  conflict_resolution: z.coerce
+    .number({
+      required_error: "Conflict resolution is required",
+      invalid_type_error: "Conflict resolution must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  strategic_thinking: z.coerce
+    .number({
+      required_error: "Strategic thinking is required",
+      invalid_type_error: "Strategic thinking must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  organizational_collaboration: z.coerce
+    .number({
+      required_error: "Organizational collaboration is required",
+      invalid_type_error: "Organizational collaboration must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
+
+  executive_presence: z.coerce
+    .number({
+      required_error: "Executive presence is required",
+      invalid_type_error: "Executive presence must be a number between 0 and 100",
+    })
+    .min(0, "Minimum is 0")
+    .max(100, "Maximum is 100"),
 });
 
 const leadershipCapabilitiesSchema = z.object({

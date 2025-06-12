@@ -50,12 +50,12 @@ const jobInformationSchema = z.object({
     .min(1, "Location cannot be empty")
     .max(200, "Location is too long"),
 
-  total_years_of_experience: z
+  total_years_of_experience: z.coerce
     .number({
       required_error: "Total years of experience is required",
       invalid_type_error: "Total years of experience must be a number",
     })
-    .min(0, { message: "Experience must be a non-negative number" }),
+    .min(0.1, { message: "Experience cannot be 0 or negative" }),
 
   promotion_before_that: z.enum(promotionBeforeThatOptions, {
     required_error: "promotion_before_that is required",
