@@ -304,6 +304,7 @@ export const handleGoogleCallback = catchAsync(async (req, res, next) => {
       id: data.user.id,
       email: data.user.email,
       full_name: data.user.user_metadata?.full_name || "",
+      email_verified: true,
     });
     await createUserSettings(profile?.id, "this is my resume", JSON.stringify(emptyResumeState), JSON.stringify(emptyCareerBluePrintState));
   }
@@ -379,12 +380,12 @@ export const handleLinkedInCallback = catchAsync(async (req, res, next) => {
   }
 
   let profile = await findUserById(data.user.id);
-
   if (!profile) {
     profile = await createUser({
       id: data.user.id,
       email: data.user.email,
-      full_name: data.user.user_metadata?.full_name || "",
+      full_name: data.user.user_metadata?.name || "",
+      email_verified: true,
     });
     await createUserSettings(profile?.id, "this is my resume", JSON.stringify(emptyResumeState), JSON.stringify(emptyCareerBluePrintState));
   }

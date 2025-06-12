@@ -20,7 +20,7 @@ export const createUser = async (userData) => {
       id: userData.id,
       email: userData.email.toLowerCase(),
       full_name: userData.full_name,
-      email_verified: false,
+      email_verified: userData.email_verified || false,
     },
   });
   return user;
