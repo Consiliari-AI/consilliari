@@ -7,7 +7,7 @@ import { validate } from "../middleware/validator.js";
 import { onboardingSchema } from "../validators/onboarding.validator.js";
 const router = express.Router();
 
-router.post("/parse-cv", protect, upload.single("resume"), cvFileValidator, parseCV);
+router.post("/parse-cv", protect, upload.single("cv"), cvFileValidator, parseCV);
 router.post("/completed", protect, validate(onboardingSchema), completeOnboarding);
 
 export default router;
