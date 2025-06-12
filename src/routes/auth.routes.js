@@ -8,6 +8,8 @@ import {
   getGoogleAuthUrl,
   handleGoogleCallback,
   confirmEmail,
+  getLinkedInAuthUrl,
+  handleLinkedInCallback,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validator.js";
 import { signupSchema, loginSchema, resetPasswordSchema, confirmResetPasswordSchema } from "../validators/auth.validators.js";
@@ -23,5 +25,8 @@ router.post("/confirm-email", confirmEmail);
 
 router.get("/google", getGoogleAuthUrl);
 router.post("/google/callback", handleGoogleCallback);
+
+router.get("/linkedin", getLinkedInAuthUrl);
+router.post("/linkedin/callback", handleLinkedInCallback);
 
 export default router;

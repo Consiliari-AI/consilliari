@@ -4,7 +4,6 @@ import supabaseAdmin from "../lib/supabaseConfig.js";
 export const protect = async (req, res, next) => {
   try {
     const accessToken = req.cookies.access_token;
-
     if (!accessToken) {
       return next(createError(401, "Not authenticated"));
     }
@@ -13,13 +12,11 @@ export const protect = async (req, res, next) => {
       data: { user },
       error,
     } = await supabaseAdmin.auth.getUser(accessToken);
-
     if (error || !user) {
       return next(createError(401, "Not authenticated"));
     }
 
     const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", user.id).single();
-
     if (profileError || !profile) {
       return next(createError(401, "User profile not found"));
     }

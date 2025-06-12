@@ -5,9 +5,9 @@ import { findUserById, createUser, updateUserEmailVerification, findUserByEmail 
 import supabaseAdmin from "../lib/supabaseConfig.js";
 import { createUserSettings } from "../services/user.settings.service.js";
 import { emptyResumeState, emptyCareerBluePrintState } from "../constants/emptyOnboardingState.js";
+
 export const signup = catchAsync(async (req, res, next) => {
   const { email, password, full_name } = req.body;
-
   const existingUser = await findUserByEmail(email.toLowerCase());
   if (existingUser) {
     return next(createError(400, "Email already in use."));
@@ -22,7 +22,6 @@ export const signup = catchAsync(async (req, res, next) => {
       emailRedirectTo: `${process.env.CLIENT_URL}/auth/confirm-email`,
     },
   });
-
   if (authError) {
     return next(createError(authError.status || 400, authError.message));
   }
@@ -32,7 +31,6 @@ export const signup = catchAsync(async (req, res, next) => {
     email: email.toLowerCase(),
     full_name: full_name,
   });
-  console.log("user profile", userProfile);
   await createUserSettings(
     userProfile?.id,
     "this is my resume",
@@ -121,7 +119,6 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email.toLowerCase(), {
     redirectTo: `${process.env.CLIENT_URL}/auth/reset-password`,
   });
-
   if (error) return next(createError(error.status || 400, error.message));
 
   res.status(200).json({
@@ -132,14 +129,12 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
 export const confirmPasswordReset = catchAsync(async (req, res, next) => {
   const { url, newPassword } = req.body;
-  console.log("req", req.body);
   if (!url || !newPassword) {
     return next(createError(400, "url and new password are required"));
   }
   const urlObj = new URL(url);
   const hash = urlObj.hash.substring(1);
   const params = new URLSearchParams(hash);
-
   const accessToken = params.get("access_token");
   const refreshToken = params.get("refresh_token");
 
@@ -188,89 +183,6 @@ export const confirmPasswordReset = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Password updated successfully",
-  });
-});
-
-export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
-  const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${process.env.CLIENT_URL}/auth/google/callback`,
-      queryParams: {
-        access_type: "offline",
-        prompt: "consent",
-      },
-    },
-  });
-
-  if (error) {
-    return next(createError(error.status || 400, error.message));
-  }
-  res.status(200).json({
-    success: true,
-    data: {
-      url: data.url,
-    },
-  });
-});
-
-export const handleGoogleCallback = catchAsync(async (req, res, next) => {
-  const { url } = req.body;
-  if (!url) {
-    return next(createError(400, "No URL provided"));
-  }
-
-  const urlObj = new URL(url);
-  const hash = urlObj.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const accessToken = params.get("access_token");
-  const refreshToken = params.get("refresh_token");
-
-  if (!accessToken || !refreshToken) {
-    return next(createError(400, "Invalid or expired token"));
-  }
-
-  const { data, error } = await supabaseAdmin.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-
-  if (error) {
-    return next(createError(error.status || 400, error.message));
-  }
-
-  let profile = await findUserById(data.user.id);
-
-  if (!profile) {
-    profile = await createUser({
-      id: data.user.id,
-      email: data.user.email,
-      full_name: data.user.user_metadata?.full_name || "",
-    });
-  }
-
-  res.cookie("access_token", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 1000, // 1 hour
-    path: "/",
-  });
-
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/",
-  });
-
-  res.status(200).json({
-    success: true,
-    message: "Google authentication successful",
-    data: {
-      user: userDto(profile),
-    },
   });
 });
 
@@ -333,6 +245,171 @@ export const confirmEmail = catchAsync(async (req, res, next) => {
     message: "Email verified successfully",
     data: {
       user: userDto(updatedUser),
+    },
+  });
+});
+
+export const getGoogleAuthUrl = catchAsync(async (req, res, next) => {
+  const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${process.env.CLIENT_URL}/auth/google/callback`,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
+    },
+  });
+
+  if (error) {
+    return next(createError(error.status || 400, error.message));
+  }
+  res.status(200).json({
+    success: true,
+    data: {
+      url: data.url,
+    },
+  });
+});
+
+export const handleGoogleCallback = catchAsync(async (req, res, next) => {
+  const { url } = req.body;
+  if (!url) {
+    return next(createError(400, "No URL provided"));
+  }
+
+  const urlObj = new URL(url);
+  const hash = urlObj.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) {
+    return next(createError(400, "Invalid or expired token"));
+  }
+
+  const { data, error } = await supabaseAdmin.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (error) {
+    return next(createError(error.status || 400, error.message));
+  }
+
+  let profile = await findUserById(data.user.id);
+
+  if (!profile) {
+    profile = await createUser({
+      id: data.user.id,
+      email: data.user.email,
+      full_name: data.user.user_metadata?.full_name || "",
+    });
+    await createUserSettings(profile?.id, "this is my resume", JSON.stringify(emptyResumeState), JSON.stringify(emptyCareerBluePrintState));
+  }
+
+  res.cookie("access_token", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
+  res.cookie("refresh_token", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Google authentication successful",
+    data: {
+      user: userDto(profile),
+    },
+  });
+});
+
+export const getLinkedInAuthUrl = catchAsync(async (req, res, next) => {
+  const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
+    provider: "linkedin_oidc",
+    options: {
+      redirectTo: `${process.env.CLIENT_URL}/auth/linkedin/callback`,
+      scopes: "openid profile email",
+    },
+  });
+
+  if (error) {
+    return next(createError(error.status || 400, error.message));
+  }
+  res.status(200).json({
+    success: true,
+    data: {
+      url: data.url,
+    },
+  });
+});
+
+export const handleLinkedInCallback = catchAsync(async (req, res, next) => {
+  const { url } = req.body;
+  if (!url) {
+    return next(createError(400, "No URL provided"));
+  }
+
+  const urlObj = new URL(url);
+  const hash = urlObj.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) {
+    return next(createError(400, "Invalid or expired token"));
+  }
+
+  const { data, error } = await supabaseAdmin.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (error) {
+    return next(createError(error.status || 400, error.message));
+  }
+
+  let profile = await findUserById(data.user.id);
+
+  if (!profile) {
+    profile = await createUser({
+      id: data.user.id,
+      email: data.user.email,
+      full_name: data.user.user_metadata?.full_name || "",
+    });
+    await createUserSettings(profile?.id, "this is my resume", JSON.stringify(emptyResumeState), JSON.stringify(emptyCareerBluePrintState));
+  }
+
+  res.cookie("access_token", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+    path: "/",
+  });
+
+  res.cookie("refresh_token", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "LinkedIn authentication successful",
+    data: {
+      user: userDto(profile),
     },
   });
 });
