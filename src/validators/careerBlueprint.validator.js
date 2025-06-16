@@ -26,7 +26,7 @@ const goalsSchema = z
         invalid_type_error: "Long term goal must be a string",
       })
       .max(1000, "Long term goal is too long")
-      .optional(),
+      .min(1, "Long term goal is required"),
 
     no_goals: z.boolean({
       required_error: "No goals selection is required",
@@ -54,7 +54,7 @@ const goalsSchema = z
       .min(1, "Challenges for goals cannot be empty")
       .max(1000, "Challenges for goals is too long"),
 
-    clarity_on_overcoming_obstacle: z
+    clarity_on_overcoming_obstacle: z.coerce
       .number({
         required_error: "Clarity rating is required",
         invalid_type_error: "Clarity must be a number between 1 and 5",
@@ -69,13 +69,6 @@ const goalsSchema = z
           code: z.ZodIssueCode.custom,
           path: ["short_term_goal"],
           message: "Short term goal is required",
-        });
-      }
-      if (!data.long_term_goal || data.long_term_goal.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["long_term_goal"],
-          message: "Long term goal is required",
         });
       }
     }
@@ -212,10 +205,14 @@ const workStyleSchema = z.object({
     invalid_type_error: "Preferred coaching style must be one of the allowed values",
   }),
 
-  accountability_methods: z.enum(accountabilityOptions, {
-    required_error: "Accountability method is required",
-    invalid_type_error: "Must be one of the allowed accountability methods",
-  }),
+  accountability_methods: z
+    .array(
+      z.string({
+        required_error: "Motivation and accountability method is required",
+        invalid_type_error: "Motivation and accountability method must be a string",
+      })
+    )
+    .min(1, "At least one motivation and accountability method is required"),
 
   reaction_to_setback: z.enum(reactionToSetbackOptions, {
     required_error: "Reaction to setback is required",
