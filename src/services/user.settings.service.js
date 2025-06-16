@@ -28,3 +28,11 @@ export const updateUserSettings = async (userId, updateData) => {
 
   return updatedSettings;
 };
+
+export const getUserSettings = async (userId) => {
+  const settings = await prisma.userSettings.findUnique({
+    where: { user_id: userId },
+  });
+
+  return settings;
+};
