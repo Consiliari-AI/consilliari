@@ -1,9 +1,11 @@
 import express from "express";
 import { protect } from "../middleware/auth.middleware.js";
-import { calculateCOS } from "../controllers/cos.controller.js";
+import { generateCOS, getCOSAnalysisData } from "../controllers/cos.controller.js";
 
 const router = express.Router();
 
-router.get("/calculate", protect, calculateCOS);
+router.post("/generate", protect, generateCOS);
 
-export default router; 
+router.get("/latest", protect, getCOSAnalysisData);
+
+export default router;
