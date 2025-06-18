@@ -6,6 +6,8 @@ import { cvParsingLLMPrompt } from "../lib/cvParsingLLMPrompt.js";
 import { updateUserSettings } from "../services/user.settings.service.js";
 import { updateUserProfile } from "../services/auth.service.js";
 import { cvparseDto } from "../dtos/cvparse.dto.js";
+import { resumeAnalysisPrompt } from "../llmPrompts/resumeAnalysisPrompt.js";
+import { createOrUpdateResumeAnalysis } from "../services/resumeAnalysis.service.js";
 
 export const parseCV = catchAsync(async (req, res, next) => {
   if (!req.file) {
@@ -26,6 +28,16 @@ export const parseCV = catchAsync(async (req, res, next) => {
     message: "CV parsed successfully",
     data: cvparseDto(userSettings),
   });
+
+  // Generate resume analysis in background
+  try {
+    const resumeAnalysisPromptText = resumeAnalysisPrompt(cvText);
+    const analysisResult = await getLLMResponse({ systemPrompt: resumeAnalysisPromptText, messages: [] });
+    const parsedAnalysis = JSON.parse(analysisResult);
+    await createOrUpdateResumeAnalysis(req.user.id, parsedAnalysis);
+  } catch (error) {
+    console.error("Background resume analysis generation failed:", error);
+  }
 });
 
 export const completeOnboarding = catchAsync(async (req, res) => {

@@ -1,5 +1,6 @@
 import { createError } from "../utils/createError.js";
 import supabaseAdmin from "../lib/supabaseConfig.js";
+import prisma from "../lib/prisma.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -24,9 +25,11 @@ export const protect = async (req, res, next) => {
     }
 
     // If access token is valid
-    const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", user.id).single();
+    const profile = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
 
-    if (profileError || !profile) {
+    if (!profile) {
       return next(createError(401, "User profile not found"));
     }
 
@@ -69,9 +72,11 @@ async function refreshAndContinue(req, res, next, refreshToken) {
       path: "/",
     });
 
-    const { data: profile, error: profileError } = await supabaseAdmin.from("Users").select("*").eq("id", refreshData.user.id).single();
+    const profile = await prisma.user.findUnique({
+      where: { id: refreshData.user.id },
+    });
 
-    if (profileError || !profile) {
+    if (!profile) {
       return next(createError(401, "User profile not found"));
     }
 

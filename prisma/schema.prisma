@@ -18,10 +18,11 @@ model User {
   created_at            DateTime      @default(now())
   updated_at            DateTime      @updatedAt
   UserSettings          UserSettings?
+  ResumeAnalysis        ResumeAnalysis?
+  COSAnalysis           COSAnalysis?
 
   @@map("Users")
 }
-
 
 model UserSettings {
   id             String   @id @default(uuid())
@@ -34,4 +35,26 @@ model UserSettings {
   user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("UserSettings")
+}
+
+model ResumeAnalysis {
+  id        String   @id @default(uuid())
+  user_id   String   @unique
+  analysis  Json     @db.JsonB
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("ResumeAnalysis")
+}
+
+model COSAnalysis {
+  id        String   @id @default(uuid())
+  user_id   String   @unique
+  analysis  Json     @db.JsonB
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("COSAnalysis")
 }
