@@ -2,28 +2,29 @@ export const resumeAnalysisPrompt = (cvText) => {
   return `
 You are a professional resume analyst and an expert in Applicant Tracking Systems (ATS),
 keyword optimization, and achievement-focused resume writing. You will analyze a given resume text
-and provide a comprehensive report. The resume is provided below.
+and provide a comprehensive report.
 
 ==========================
 **Resume**:
 ${cvText}
 ==========================
 
-Please analyze the resume and provide the following in structured JSON format:
 
-1. Overall Resume Score (in percentage): Evaluate overall quality based on ATS compatibility, keyword optimization, and achievement focus.
+**Evaluation Dimensions**:
+
+1. Overall Resume Score (in percentage): Evaluate overall quality of the resume based on ATS compatibility, keyword optimization, and achievement focus.
 2. ATS Compatibility (score out of 100): How well the resume would perform in an ATS system.
-3. Keyword Optimization (score out of 100): Check whether industry-relevant keywords are used.
+3. Keyword Optimization (score out of 100): Check whether industry-relevant keywords are used that are required by ATS.
 4. Achievement Focus (score out of 100): Assess how well the resume quantifies achievements with metrics (e.g., "increased revenue by 27%").
 5. Resume Strength Tips:
-    - One positive key insight (e.g., strong quantified achievements).
-    - One negative key insight if applicable (e.g., missing certifications, outdated format, lack of clarity).
+    Positive - One positive key insight or the strongest aspect of this resume (e.g., strong quantified achievements).
+    Negative - One negative key insight or the most critical weakness that should be improved(e.g., missing certifications, missing quantified achievements, missing an importanrt section).
 6. Resume Analysis:
-    - Strengths: List of 3-5 things the resume does well.
-    - Weaknesses: List of 3-5 areas for improvement.
+    - Strengths: List of 3-5 things the resume does well. For each strength, clearly refer to the part of the CV that demonstrates this strength (quote or summarize the relevant sentence or section from the CV).
+    - Weaknesses: List of 3-5 areas for improvement in the cv. For each weakness, explain why it needs improvement and also point to a relevant example or reference from the CV (quote or summarize the section that demonstrates this weakness).
 7. Keyword Analysis:
     - List of missing or recommended keywords based on the target job or industry.
-    - If possible, suggest improvements or areas where keywords could be inserted.
+    - Provide advice on how to improve keyword optimization. For the advice, refer or quote a relevant part of the CV that could be improved by adding or optimizing keywords.
 
 Output the results in this JSON format:
 
@@ -34,18 +35,22 @@ Output the results in this JSON format:
   "keyword_optimization": 45,
   "achievement_focus": 70,
   "resume_strength_tips": {
-    "positive": "Strong quantifiable achievements: Your resume effectively highlights results with metrics and numbers.",
-    "negative": "Missing certifications section: Consider adding relevant certifications to strengthen your qualifications."
+     "positive": {
+      "heading": "",
+      "description": ""
+    }, 
+    "negative": {
+      "heading": "",
+      "description": ""
+    } 
   },
   "resume_analysis": {
     "strengths": [
       "Quantified impact with metrics like 'increased revenue by 27%'",
-      "Clear formatting and structure",
       "Relevant industry experience"
     ],
     "weaknesses": [
       "No mention of certifications",
-      "Lack of action verbs in some sections"
     ]
   },
   "keyword_analysis": {
