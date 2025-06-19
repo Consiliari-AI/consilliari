@@ -29,4 +29,50 @@ export const getCareerGoals = async (userId) => {
   });
 
   return careerGoals;
+};
+
+export const updateMilestoneAndGoalProgress = async (userId, goalId, milestoneId, completionStatus) => {
+  // Get the current goal
+  const goal = await prisma.careerGoals.findFirst({
+    where: { 
+      id: goalId,
+      user_id: userId 
+    },
+  });
+
+  if (!goal) {
+    return null;
+  }
+
+  // Parse milestones
+  const milestones = goal.milestones;
+  
+  // Find and update the specific milestone
+  const milestoneIndex = milestones.findIndex(m => m.milestone_id === milestoneId);
+  if (milestoneIndex === -1) {
+    return null;
+  }
+
+  // Update the milestone completion status
+  milestones[milestoneIndex].milestone_completion_status = completionStatus;
+
+  // Calculate new goal progress
+  const completedMilestones = milestones.filter(m => m.milestone_completion_status === true).length;
+  const totalMilestones = milestones.length;
+  const newProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
+  // Check if goal is completed (all milestones completed)
+  const goalCompletionStatus = completedMilestones === totalMilestones;
+
+  // Update the goal in database
+  const updatedGoal = await prisma.careerGoals.update({
+    where: { id: goalId },
+    data: {
+      milestones: milestones,
+      goal_progress: newProgress.toString(),
+      goal_completion_status: goalCompletionStatus,
+    },
+  });
+
+  return updatedGoal;
 }; 

@@ -1,7 +1,7 @@
 import { catchAsync } from "../utils/error.js";
 import { createError } from "../utils/createError.js";
 import { getUserSettings } from "../services/user.settings.service.js";
-import { createOrUpdateCareerGoals, getCareerGoals } from "../services/careerGoals.service.js";
+import { createOrUpdateCareerGoals, getCareerGoals, updateMilestoneAndGoalProgress } from "../services/careerGoals.service.js";
 import { careerGoalsPrompt } from "../llmPrompts/careerGoalsPrompt.js";
 import { getLLMResponse } from "../lib/llmConfig.js";
 import { careerGoalsDto } from "../dtos/careerGoals.dto.js";
@@ -63,4 +63,36 @@ export const getCareerGoalsData = catchAsync(async (req, res, next) => {
     success: true,
     data: careerGoalsDto(parsedGoals),
   });
+});
+
+export const updateMilestoneStatus = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { goalId, milestoneId } = req.params;
+  const { completion_status } = req.body;
+
+  if (typeof completion_status !== 'boolean') {
+    return next(createError(400, "completion_status must be a boolean value"));
+  }
+
+  try {
+    const updatedGoal = await updateMilestoneAndGoalProgress(
+      userId, 
+      goalId, 
+      parseInt(milestoneId), 
+      completion_status
+    );
+
+    if (!updatedGoal) {
+      return next(createError(404, "Goal or milestone not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Milestone status updated successfully",
+      data: careerGoalsDto([updatedGoal]).career_goals[0],
+    });
+  } catch (error) {
+    console.error("Milestone update error:", error);
+    return next(createError(500, "Failed to update milestone status"));
+  }
 });
