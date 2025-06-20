@@ -70,22 +70,18 @@ export const updateMilestoneStatus = catchAsync(async (req, res, next) => {
   const { goalId, milestoneId } = req.params;
   const { completion_status } = req.body;
 
-  if (typeof completion_status !== 'boolean') {
+  if (typeof completion_status !== "boolean") {
     return next(createError(400, "completion_status must be a boolean value"));
   }
 
   try {
-    const updatedGoal = await updateMilestoneAndGoalProgress(
-      userId, 
-      goalId, 
-      parseInt(milestoneId), 
-      completion_status
-    );
+    const updatedGoal = await updateMilestoneAndGoalProgress(userId, goalId, parseInt(milestoneId), completion_status);
 
     if (!updatedGoal) {
       return next(createError(404, "Goal or milestone not found"));
     }
 
+    console.log("updated goal", updatedGoal);
     res.status(200).json({
       success: true,
       message: "Milestone status updated successfully",

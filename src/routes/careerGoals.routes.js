@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.post("/generate", protect, generateCareerGoals);
 router.get("/latest", protect, getCareerGoalsData);
-router.put("/update-milestone/:goalId/:milestoneId", protect, updateMilestoneStatus);
+router.patch("/update-milestone/:goalId/:milestoneId", protect, updateMilestoneStatus);
 
 export default router;

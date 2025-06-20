@@ -3,6 +3,7 @@ export const careerGoalsDto = (data) => {
   if (Array.isArray(data) && data.length > 0 && data[0].id) {
     return {
       career_goals: data.map((goal) => ({
+        id: goal.id,
         goal_heading: goal.goal_heading || "",
         goal_description: goal.goal_description || "",
         goal_progress: goal.goal_progress || "0",
@@ -12,10 +13,11 @@ export const careerGoalsDto = (data) => {
       })),
     };
   }
-  
+
   // If data is the parsed LLM response (array of goals)
   return {
     career_goals: data.map((goal) => ({
+      id: goal.id,
       goal_heading: goal.goal_heading || "",
       goal_description: goal.goal_description || "",
       goal_progress: goal.goal_progress || "0",
@@ -28,4 +30,4 @@ export const careerGoalsDto = (data) => {
       })),
     })),
   };
-}; 
+};
